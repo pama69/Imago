@@ -14,7 +14,16 @@ export async function generate({ prompt, model, type, file }) {
   form.append('model', model);
   form.append('type', type);
   if (file) form.append('file', file);
-  return request('/generate', { method: 'POST', body: form });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 minuti
+  try {
+    const res = await fetch(BASE + '/generate', { method: 'POST', body: form, signal: controller.signal });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+    return json;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // ── Sessions ──────────────────────────────────────────────
@@ -25,10 +34,4 @@ export const deleteSession  = (id) => request(`/sessions/${id}`, { method: 'DELE
 // ── Assets ────────────────────────────────────────────────
 export const deleteAsset = (id) => request(`/assets/${id}`, { method: 'DELETE' });
 
-// ── Settings ──────────────────────────────────────────────
-export const getSettings = ()    => request('/settings');
-export const saveSettings = (data) => request('/settings', {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(data),
-});
+// ── Sett

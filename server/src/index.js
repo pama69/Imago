@@ -46,6 +46,5 @@ if (existsSync(publicDir)) {
 }
 
 // ── Start ───────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`🚀 Imago server → http://localhost:${PORT}`);
-});
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Imago server → http://localhost:
