@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getSessions, getSession, deleteSession } from '../lib/api.js';
 
 export default function ArchivioPage() {
@@ -161,6 +161,9 @@ export default function ArchivioPage() {
                     <AssetThumb key={a._id} asset={a} large />
                   ))}
                 </div>
+
+                {/* Prompt box */}
+                <PromptBox prompt={detail.prompt} />
               </div>
             )}
           </div>
@@ -240,24 +243,23 @@ function AssetThumb({ asset, large }) {
   );
 }
 
-function SectionLabel({ children }) {
-  return <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{children}</div>;
-}
-
-function PageCenter({ children }) {
+function PromptBox({ prompt }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(prompt).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
   return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, color: 'var(--text-2)' }}>
-      {children}
-    </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-      style={{ animation: 'spin 0.8s linear infinite' }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-    </svg>
-  );
-}
+    <div style={{ marginTop: 24 }}>
+      <SectionLabel>Prompt</SectionLabel>
+      <div style={{
+        marginTop: 8,
+        background: 'var(--bg)',
+        border: '1.5px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        padding: '12px 14px',
+        position: 'relative',
+      }}>
+        <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, margin: 0
