@@ -84,8 +84,12 @@ async function pollStatus(taskId) {
     const json = await res.json().catch(() => ({}));
 
     if (json.status === 'completed' || json.status === 'succeeded') {
-      const fileUrl = json.output_url || json.video_url || json.image_url || json.url;
-      if (!fileUrl) throw new Error('KLIFGEN: task completato ma URL mancante');
+      console.log('[KLIFGEN] task completato, risposta:', JSON.stringify(json));
+      const fileUrl = json.output_url || json.video_url || json.image_url || json.url
+        || json.result_url || json.file_url || json.media_url
+        || (Array.isArray(json.output) ? json.output[0] : null)
+        || (Array.isArray(json.images) ? json.images[0] : null);
+      if (!fileUrl) throw new Error(`KLIFGEN: task completato ma URL mancante — campi ricevuti: ${Object.keys(json).join(', ')}`);
       return fileUrl;
     }
     if (json.status === 'failed' || json.status === 'error') {
