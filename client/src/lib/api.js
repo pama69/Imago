@@ -34,4 +34,10 @@ export const deleteSession  = (id) => request(`/sessions/${id}`, { method: 'DELE
 // ── Assets ────────────────────────────────────────────────
 export const deleteAsset = (id) => request(`/assets/${id}`, { method: 'DELETE' });
 
-// ── Sett
+// ── Settings ──────────────────────────────────────────────
+export const getSettings  = ()       => request('/settings');
+export const saveSettings = (data)   => request('/settings', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(data),
+});
