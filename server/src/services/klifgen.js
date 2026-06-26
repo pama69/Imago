@@ -139,15 +139,32 @@ async function grokImage({ prompt, sourceBuffer, sourceMime, imageUrl }) {
 
 async function seedream5lite({ prompt, imageUrl }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-seedream-5-lite', {
+
+  const body = new URLSearchParams({
     username, secret_key, prompt,
     aspect_ratio: '1:1',
     quality: 'high',
     ...(imageUrl ? { image_url: imageUrl } : {}),
   });
+
+  const res = await fetch(`${BASE}/request-seedream-5-lite`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  const json = await res.json().catch(() => ({}));
+
+  // Risposta asincrona: l'API restituisce un task_id da fare polling
+  if (json.task_id) {
+    const url = await pollStatus(json.task_id);
+    return urlToDataUrl(url, 'image/png');
+  }
+
+  // Risposta sincrona: URL diretto
   const resultUrl = json.image_url || json.url || json.output_url;
-  if (!resultUrl) throw new Error('Seedream 5 Lite: nessun URL restituito');
-  return urlToDataUrl(resultUrl, 'image/png');
+  if (resultUrl) return urlToDataUrl(resultUrl, 'image/png');
+
+  throw new Error(`KLIFGEN request-seedream-5-lite error: ${json.message || json.error || res.statusText}`);
 }
 
 async function wan25image({ prompt, imageUrl }) {
