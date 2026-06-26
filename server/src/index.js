@@ -47,4 +47,6 @@ if (existsSync(publicDir)) {
 
 // ── Start ───────────────────────────────────────────────────
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Imago server → http://localhost:
+  console.log(`🚀 Imago server → http://localhost:${PORT}`);
+});
+server.setTimeout(5 * 60 * 1000); // 5 minuti per generazioni lente
