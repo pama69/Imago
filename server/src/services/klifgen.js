@@ -141,69 +141,63 @@ async function grokImage({ prompt, sourceBuffer, sourceMime, imageUrl }) {
   return urlToDataUrl(resultUrl, 'image/png');
 }
 
-async function seedream5lite({ prompt, imageUrl }) {
+async function seedream5lite({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
+  const fields = { username, secret_key, prompt, aspect_ratio: '1:1', quality: 'high' };
 
-  const body = new URLSearchParams({
-    username, secret_key, prompt,
-    aspect_ratio: '1:1',
-    quality: 'high',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  let json;
+  if (sourceBuffer) {
+    json = await postMultipart('request-seedream-5-lite', { ...fields, has_image: '1' }, sourceBuffer, sourceMime);
+  } else {
+    json = await postForm('request-seedream-5-lite', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
+  }
 
-  const res = await fetch(`${BASE}/request-seedream-5-lite`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  });
-  const json = await res.json().catch(() => ({}));
-
-  // Risposta asincrona: l'API restituisce un task_id da fare polling
   if (json.task_id) {
     const url = await pollStatus(json.task_id);
     return urlToDataUrl(url, 'image/png');
   }
-
-  // Risposta sincrona: URL diretto
   const resultUrl = json.image_url || json.url || json.output_url;
   if (resultUrl) return urlToDataUrl(resultUrl, 'image/png');
-
-  throw new Error(`KLIFGEN request-seedream-5-lite error: ${json.message || json.error || res.statusText}`);
+  throw new Error(`KLIFGEN request-seedream-5-lite error: ${json.message || json.error || 'nessun URL'}`);
 }
 
-async function wan25image({ prompt, imageUrl }) {
+async function wan25image({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-wan-2-5-image', {
-    username, secret_key, prompt,
-    size: '1:1',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, size: '1:1' };
+  let json;
+  if (sourceBuffer) {
+    json = await postMultipart('request-wan-2-5-image', { ...fields, has_image: '1' }, sourceBuffer, sourceMime);
+  } else {
+    json = await postForm('request-wan-2-5-image', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
+  }
   const resultUrl = json.image_url || json.url || json.output_url;
   if (!resultUrl) throw new Error('WAN 2.5 Image: nessun URL restituito');
   return urlToDataUrl(resultUrl, 'image/png');
 }
 
-async function nanoBanana2({ prompt, imageUrl }) {
+async function nanoBanana2({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-nano-banana-2', {
-    username, secret_key, prompt,
-    resolution: '1K',
-    aspect_ratio: '1:1',
-    ...(imageUrl ? { has_image: '1', image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, resolution: '1K', aspect_ratio: '1:1' };
+  let json;
+  if (sourceBuffer) {
+    json = await postMultipart('request-nano-banana-2', { ...fields, has_image: '1' }, sourceBuffer, sourceMime);
+  } else {
+    json = await postForm('request-nano-banana-2', { ...fields, ...(imageUrl ? { has_image: '1', image_url: imageUrl } : {}) });
+  }
   const resultUrl = json.image_url || json.url || json.output_url;
   if (!resultUrl) throw new Error('Nano Banana 2: nessun URL restituito');
   return urlToDataUrl(resultUrl, 'image/png');
 }
 
-async function nanoBanana({ prompt, imageUrl }) {
+async function nanoBanana({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-nano-banana', {
-    username, secret_key, prompt,
-    output_format: 'png',
-    image_size: '1:1',
-    ...(imageUrl ? { has_image: '1', image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, output_format: 'png', image_size: '1:1' };
+  let json;
+  if (sourceBuffer) {
+    json = await postMultipart('request-nano-banana', { ...fields, has_image: '1' }, sourceBuffer, sourceMime);
+  } else {
+    json = await postForm('request-nano-banana', { ...fields, ...(imageUrl ? { has_image: '1', image_url: imageUrl } : {}) });
+  }
   const resultUrl = json.image_url || json.url || json.output_url;
   if (!resultUrl) throw new Error('Nano Banana: nessun URL restituito');
   return urlToDataUrl(resultUrl, 'image/png');
@@ -213,78 +207,72 @@ async function nanoBanana({ prompt, imageUrl }) {
 // MODELLI VIDEO (async)
 // ═══════════════════════════════════════════════
 
-async function wan27({ prompt, imageUrl }) {
+async function wan27({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-wan-2-7', {
-    username, secret_key, prompt,
-    resolution: '720p', duration: '5', aspect_ratio: '16:9',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, resolution: '720p', duration: '5', aspect_ratio: '16:9' };
+  const json = sourceBuffer
+    ? await postMultipart('request-wan-2-7', { ...fields, has_image: '1' }, sourceBuffer, sourceMime)
+    : await postForm('request-wan-2-7', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
   const taskId = json.task_id;
   if (!taskId) throw new Error('WAN 2.7: nessun task_id');
   const url = await pollStatus(taskId);
   return urlToDataUrl(url, 'video/mp4');
 }
 
-async function seedance20({ prompt, imageUrl }) {
+async function seedance20({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-seedance-2-0', {
-    username, secret_key, prompt,
-    variant: 'fast', resolution: '720p', duration: '5', aspect_ratio: '16:9',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, variant: 'fast', resolution: '720p', duration: '5', aspect_ratio: '16:9' };
+  const json = sourceBuffer
+    ? await postMultipart('request-seedance-2-0', { ...fields, has_image: '1' }, sourceBuffer, sourceMime)
+    : await postForm('request-seedance-2-0', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
   const taskId = json.task_id;
   if (!taskId) throw new Error('Seedance 2.0: nessun task_id');
   const url = await pollStatus(taskId);
   return urlToDataUrl(url, 'video/mp4');
 }
 
-async function seedance({ prompt, imageUrl }) {
+async function seedance({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-seedance', {
-    username, secret_key, prompt,
-    model: 'lite', resolution: '720p', duration: '5', aspect_ratio: '16:9',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, model: 'lite', resolution: '720p', duration: '5', aspect_ratio: '16:9' };
+  const json = sourceBuffer
+    ? await postMultipart('request-seedance', { ...fields, has_image: '1' }, sourceBuffer, sourceMime)
+    : await postForm('request-seedance', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
   const taskId = json.task_id;
   if (!taskId) throw new Error('Seedance: nessun task_id');
   const url = await pollStatus(taskId);
   return urlToDataUrl(url, 'video/mp4');
 }
 
-async function veo3({ prompt, imageUrl }) {
+async function veo3({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-veo3', {
-    username, secret_key, prompt,
-    model: 'veo3_fast', resolution: '720p', aspect_ratio: '16:9',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, model: 'veo3_fast', resolution: '720p', aspect_ratio: '16:9' };
+  const json = sourceBuffer
+    ? await postMultipart('request-veo3', { ...fields, has_image: '1' }, sourceBuffer, sourceMime)
+    : await postForm('request-veo3', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
   const taskId = json.task_id;
   if (!taskId) throw new Error('VEO 3.1: nessun task_id');
   const url = await pollStatus(taskId);
   return urlToDataUrl(url, 'video/mp4');
 }
 
-async function sora2({ prompt, imageUrl }) {
+async function sora2({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-sora-2', {
-    username, secret_key, prompt,
-    aspect_ratio: '16:9', n_frames: '10',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, aspect_ratio: '16:9', n_frames: '10' };
+  const json = sourceBuffer
+    ? await postMultipart('request-sora-2', { ...fields, has_image: '1' }, sourceBuffer, sourceMime)
+    : await postForm('request-sora-2', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
   const taskId = json.task_id;
   if (!taskId) throw new Error('Sora 2: nessun task_id');
   const url = await pollStatus(taskId);
   return urlToDataUrl(url, 'video/mp4');
 }
 
-async function grokImagineVideo({ prompt, imageUrl }) {
+async function grokImagineVideo({ prompt, imageUrl, sourceBuffer, sourceMime }) {
   const { username, secret_key } = creds();
-  const json = await postForm('request-grok-imagine', {
-    username, secret_key, prompt,
-    resolution: '720p', duration: '6', aspect_ratio: '16:9',
-    ...(imageUrl ? { image_url: imageUrl } : {}),
-  });
+  const fields = { username, secret_key, prompt, resolution: '720p', duration: '6', aspect_ratio: '16:9' };
+  const json = sourceBuffer
+    ? await postMultipart('request-grok-imagine', { ...fields, has_image: '1' }, sourceBuffer, sourceMime)
+    : await postForm('request-grok-imagine', { ...fields, ...(imageUrl ? { image_url: imageUrl } : {}) });
   const taskId = json.task_id;
   if (!taskId) throw new Error('Grok Imagine Video: nessun task_id');
   const url = await pollStatus(taskId);
